@@ -1,0 +1,130 @@
+<div class="container mt-5">
+    <h1 class="text-center">Daftar Hewan</h1>
+
+    <!-- Form untuk Menambahkan Hewan Baru -->
+    <form id="addTodoForm" class="my-4">
+        <div class="input-group">
+            <input type="text" id="newNamaHewan" class="form-control" placeholder="Nama Hewan" required>
+            <input type="text" id="newJumlahHewan" class="form-control" placeholder="Jumlah Hewan" required>
+            <input type="text" id="newJenisHewan" class="form-control" placeholder="Jenis Hewan" required>
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-primary">Tambah Hewan</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Daftar Hewan -->
+    <ul id="todoList" class="list-group">
+        <% todos.forEach(todo => { %>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                    <%= todo.nama_hewan %> - <%= todo.jumlah_hewan %> - <%= todo.jenis_hewan %>
+                </span>
+                <div>
+                    <button class="btn btn-sm btn-success mr-2 editBtn" data-id="<%= todo.id %>">Edit</button>
+                    <button class="btn btn-sm btn-danger deleteBtn" data-id="<%= todo.id %>">Hapus</button>
+                </div>
+            </li>
+        <% }); %>
+    </ul>
+
+    <!-- Modal Edit Hewan -->
+    <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Hewan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTodoForm">
+                        <div class="form-group">
+                            <label for="editNamaHewan">Nama Hewan</label>
+                            <input type="text" id="editNamaHewan" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editJumlahHewan">Jumlah Hewan</label>
+                            <input type="text" id="editJumlahHewan" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editJenisHewan">Jenis Hewan</label>
+                            <input type="text" id="editJenisHewan" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Simpan Perubahan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Tambah hewan baru
+        $('#addTodoForm').on('submit', function (e) {
+            e.preventDefault();
+            const namaHewan = $('#newNamaHewan').val().trim();
+            const jumlahHewan = $('#newJumlahHewan').val().trim();
+            const jenisHewan = $('#newJenisHewan').val().trim();
+            if (namaHewan && jumlahHewan && jenisHewan) {
+                $.ajax({
+                    url: '/todos',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ nama_hewan: namaHewan, jumlah_hewan: jumlahHewan, jenis_hewan: jenisHewan }),
+                    success: function (newTodo) {
+                        location.reload(); // Reload untuk menampilkan hewan baru
+                    },
+                    error: function (error) {
+                        console.error("Error menambahkan hewan:", error.responseText);
+                    }
+                });
+            }
+        });
+
+        // Hapus hewan
+        $('.deleteBtn').on('click', function () {
+            const id = $(this).data('id');
+            $.ajax({
+                url: '/todos/' + id,
+                type: 'DELETE',
+                success: function () {
+                    location.reload(); // Reload untuk memperbarui daftar
+                }
+            });
+        });
+
+        // Tampilkan modal edit dengan hewan saat ini
+        let editId;
+        $('.editBtn').on('click', function () {
+            editId = $(this).data('id');
+            const currentNamaHewan = $(this).closest('li').find('span').text().split(' - ')[0];
+            const currentJumlahHewan = $(this).closest('li').find('span').text().split(' - ')[1];
+            const currentJenisHewan = $(this).closest('li').find('span').text().split(' - ')[2];
+            $('#editNamaHewan').val(currentNamaHewan);
+            $('#editJumlahHewan').val(currentJumlahHewan);
+            $('#editJenisHewan').val(currentJenisHewan);
+            $('#editModal').modal('show');
+        });
+
+        // Update hewan pada submit form
+        $('#editTodoForm').on('submit', function (e) {
+            e.preventDefault();
+            const namaHewan = $('#editNamaHewan').val().trim();
+            const jumlahHewan = $('#editJumlahHewan').val().trim();
+            const jenisHewan = $('#editJenisHewan').val().trim();
+            if (namaHewan && jumlahHewan && jenisHewan) {
+                $.ajax({
+                    url: '/todos/' + editId,
+                    type: 'PUT',
+                    data: JSON.stringify({ nama_hewan: namaHewan, jumlah_hewan: jumlahHewan, jenis_hewan: jenisHewan }),
+                    contentType: 'application/json',
+                    success: function () {
+                        location.reload(); // Reload untuk menampilkan perubahan
+                    }
+                });
+            }
+        });
+    });
+</script>
